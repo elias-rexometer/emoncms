@@ -202,15 +202,9 @@ class Input
             $row["description"] = utf8_encode($row["description"]);
          
             $lastvalue = $this->redis->hmget("input:lastvalue:$id",array('time','value'));
-            // Fix break point where value is NAN
-            $lastvalue['time'] = $lastvalue['time'] * 1; 
-            $row['time'] = (int) $lastvalue['time'];
-            if (is_nan($row['time'])) $row['time'] = 0;
-         
-            $lastvalue['value'] = $lastvalue['value'] * 1; 
-            $row['value'] = (float) $lastvalue['value'];
-            if (is_nan($row['value'])) $row['value'] = 0;
-         
+            $row['time'] = ($lastvalue['time'] ? $lastvalue['time'] : null);
+            $row['value'] = ($lastvalue['value'] ? $lastvalue['value'] : null);
+            // CHAVEIRO comment: Can return NULL as a valid number or else processlist logic will be broken
             $inputs[] = $row;
         }
         return $inputs;
@@ -263,7 +257,8 @@ class Input
         $id = (int) $id;
 
         if ($this->redis) {
-            return $this->redis->hget("input:lastvalue:$id",'value');
+            $lastvalue = $this->redis->hget("input:lastvalue:$id",'value'); 
+            return ($lastvalue ? $lastvalue : null);
         } else {
             $result = $this->mysqli->query("SELECT value FROM input WHERE `id` = '$id'");
             $row = $result->fetch_array();
