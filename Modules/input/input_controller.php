@@ -212,13 +212,16 @@ function input_controller()
             $error = "Format error, json string supplied is not valid";
         }
 
-            if ($valid) {
-                $result = 'ok';
+        if ($valid) {
+            if (isset($_GET['fulljson'])) {
+                $result = '{"success": true}';
             } else {
-                $result = '{"success": false, "message": "'.str_replace("\"","'",$error).'"}';
-                $log = new EmonLogger(__FILE__);
-                $log->error($error);
+                $result = 'ok';
             }
+        } else {
+            $result = '{"success": false, "message": "'.str_replace("\"","'",$error).'"}';
+            $log = new EmonLogger(__FILE__);
+            $log->error($error);
         }
     }
 
@@ -327,7 +330,7 @@ function input_controller()
         if ($valid)
             $result = 'ok';
         else {
-            $result = "Error: $error\n";
+            $result = '{"success": false, "message": "'.str_replace("\"","'",$error).'"}';
             $log = new EmonLogger(__FILE__);
             $log->error($error);
         }
@@ -361,16 +364,20 @@ function input_controller()
                     $result = "Node does not exist";
                 }
             
-            if ($valid)
-                if (isset($_GET['fulljson'])) {
-                    $result = '{"success": true}';
+            } else {
+                // Property
+                if ($route->subaction2) { $name = $route->subaction2; } else { $name = get('name'); }
+                $name = preg_replace('/[^\p{N}\p{L}_\s-.]/u','',$name);
+                
+                if (isset($dbinputs[$nodeid])) {
+                    if (isset($dbinputs[$nodeid][$name])) {
+                        $result = $dbinputs[$nodeid][$name];
+                    } else {
+                        $result = "Node variable does not exist";
+                    }
                 } else {
-                    $result = 'ok';
+                    $result = "Node does not exist";
                 }
-            else {
-                $result = '{"success": false, "message": "'.str_replace("\"","'",$error).'"}';
-                $log = new EmonLogger(__FILE__);
-                $log->error($error);
             }
         }
     }
@@ -404,3 +411,4 @@ function input_controller()
 
     return array('content'=>$result);
 }
+

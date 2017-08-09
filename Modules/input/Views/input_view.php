@@ -8,6 +8,19 @@
 <script type="text/javascript" src="<?php echo $path; ?>Modules/feed/feed.js"></script>
 
 <style>
+
+.container-fluid { padding: 0px 10px 0px 10px; }
+
+#footer {
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.navbar-fixed-top {
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
 .node {margin-bottom:10px;}
 
 .node-info {
@@ -32,7 +45,7 @@
 .device-key {
 	float:right;
 	padding:10px;
-	min-width:50px;
+	min-width:30px;
 	text-align:center;
 	color:#fff;
 	border-left: 1px solid #eee;
@@ -41,7 +54,7 @@
 .device-schedule {
 	float:right;
 	padding:10px;
-	min-width:50px;
+	min-width:30px;
 	text-align:center;
 	color:#fff;
 	border-left: 1px solid #eee;
@@ -51,7 +64,7 @@
 .device-configure {
 	float:right;
 	padding:10px;
-	width:50px;
+	width:30px;
 	text-align:center;
 	color:#666;
 	border-left: 1px solid #eee;
@@ -70,24 +83,18 @@
     border-bottom:1px solid #fff;
     border-left:2px solid #f0f0f0;
     height:41px;
-    /*
-    padding-left:10px;
-    padding-right:10px;*/
 }
 
 .node-input:hover{ border-left:2px solid #44b3e2; }
 
 .node-input .select {
     display:inline-block;
-    width:20px;
     padding-top: 10px;
-    /*padding-right: 10px;*/
     text-align:center;
 }
 
 .node-input .name {
     display:inline-block;
-    /*padding-top:10px;*/
 }
 
 .node-input .processlist {
@@ -121,6 +128,10 @@
 	  cursor:pointer;
 }
 
+.ipad {
+    padding-left:10px;
+}
+
 input[type="checkbox"] { margin:0px; }
 #input-selection { width:80px; }
 .controls { margin-bottom:10px; }
@@ -140,18 +151,12 @@ input[type="checkbox"] { margin:0px; }
     margin-top:-2px;
 }
 
-@media (min-width: 768px) and (max-width: 979px) {
-
+@media (min-width: 768px) {
+    .container-fluid { padding: 0px 20px 0px 20px; }
 }
 
-@media (min-width: 480px) and (max-width: 768px) {
-
-}
-
-@media (max-width: 480px) {
-/*.node-input .processlist { display:none}
-.node-input .value { display:none}
-.node-input .time { display:none}*/
+@media (max-width: 768px) {
+    body {padding:0};
 }
 
 </style>
@@ -306,8 +311,8 @@ function draw_devices()
         out += "    <div class='device-name'>"+node+":</div>";
         out += "    <div class='device-description'>"+devices[node].description+"</div>";
         out += "    <div class='device-configure'><i class='icon-wrench icon-white'></i></div>";
-        out += "    <div class='device-key'>KEY</div>";
-        out += "    <div class='device-schedule'>SCHEDULE</div>";
+        out += "    <div class='device-key'><i class='icon-lock icon-white'></i></div>"; 
+        out += "    <div class='device-schedule'><i class='icon-time icon-white'></i></div>";
         out += "  </div>";
         out += "<div class='node-inputs "+visible+"' node='"+node+"'>";
         
@@ -319,10 +324,10 @@ function draw_devices()
                 selected = "checked";
             
             out += "<div class='node-input' id="+input.id+">";
-            out += "<div class='select'><input class='input-select' type='checkbox' id='"+input.id+"' "+selected+" /></div>";
-            out += "<div class='name'>"+input.name+"</div>";
+            out += "<div class='select'><div class='ipad'><input class='input-select' type='checkbox' id='"+input.id+"' "+selected+" /></div></div>";
+            out += "<div class='name'><div class='ipad'>"+input.name+"</div></div>";
             
-            if (processlist_ui != undefined)  out += "<div class='processlist'>"+processlist_ui.drawpreview(input.processList)+"</div>";
+            if (processlist_ui != undefined)  out += "<div class='processlist'><div class='ipad'>"+processlist_ui.drawpreview(input.processList)+"</div></div>";
             
             out += "<div class='node-input-right'>";
             out += "<div class='time'>"+list_format_updated(input.time)+"</div>";
@@ -379,6 +384,8 @@ $("#table").on("click",".node-info",function() {
         $(".node-inputs[node='"+node+"']").show();
         nodes_display[node] = true;
     }
+    
+    resize();
 });
 
 $("#table").on("click",".input-select",function(e) {
@@ -492,7 +499,8 @@ $(".input-delete").click(function(){
 			      var i = inputs[inputid];
 			      if (i.processList == "" && i.description == "" && (parseInt(i.time) + (60*15)) < ((new Date).getTime() / 1000)){
 				        // delete now if has no values and updated +15m
-				        ids.push(parseInt(inputid)); 
+				        // ids.push(parseInt(inputid)); 
+				        out += i.nodeid+":"+i.name+"<br>";
 			      } else {
 				        out += i.nodeid+":"+i.name+"<br>";		
 			      }
@@ -590,23 +598,26 @@ function resize()
     show_value = true;
 
     $(".node-input").each(function(){
-       var w = $(this).width()-10;
-       
-       var tw = 0;
-       tw += $(this).find(".name").width();
-       tw += $(this).find(".configure").width();
+         var node_input_width = $(this).width();
+         if (node_input_width>0) {
+             var w = node_input_width-10;
+             
+             var tw = 0;
+             tw += $(this).find(".name").width();
+             tw += $(this).find(".configure").width();
 
-       tw += $(this).find(".select").width();
-       if (tw>w) show_select = false;
-       
-       tw += $(this).find(".value").width();
-       if (tw>w) show_value = false;
-       
-       tw += $(this).find(".time").width();
-       if (tw>w) show_time = false;   
-          
-       tw += $(this).find(".processlist").width();
-       if (tw>w) show_processlist = false;
+             tw += $(this).find(".select").width();
+             if (tw>w) show_select = false;
+             
+             tw += $(this).find(".value").width();
+             if (tw>w) show_value = false;
+             
+             tw += $(this).find(".time").width();
+             if (tw>w) show_time = false;   
+                
+             tw += $(this).find(".processlist").width();
+             if (tw>w) show_processlist = false;
+         }
     });
     
     if (show_select) $(".select").show(); else $(".select").hide();
