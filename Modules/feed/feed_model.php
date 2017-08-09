@@ -66,6 +66,9 @@ class Feed
             } else if ($e == "histogram") {
                     require "Modules/feed/engine/Histogram.php";        // Histogram, depends on mysql
                     $engines[$e] = new Histogram($this->mysqli);
+            } else if ($e == (string)Engine::CASSANDRA) {
+                    require "Modules/feed/engine/CassandraEngine.php";  // Cassandra engine
+                    $engines[$e] =  new CassandraEngine($this->settings['cassandra']);
             } else {
                     $this->log->error("EngineClass() Engine id '".$e."' is not supported.");
                     throw new Exception("ABORTED: Engine id '".$e."' is not supported.");
@@ -426,17 +429,13 @@ class Feed
         {
             if ($this->redis->hExists("feed:$id",'time')) {
                 $lastvalue = $this->redis->hmget("feed:$id",array('time','value'));
-                if ($lastvalue['time']) {
-                    $lastvalue['time'] = (int) $lastvalue['time'];
-                } else {
-                    $lastvalue['time'] = null;
-                }
-                if ($lastvalue['value']) {
-                    $lastvalue['value'] = (float) $lastvalue['value'];
-                } else {
-                    $lastvalue['value'] = null;
-                }
-                // CHAVEIRO comment: Can return NULL as a valid number or else processlist logic will be broken
+                
+                if (!is_numeric($lastvalue["time"])) $lastvalue["time"] = null;
+                if (is_nan($lastvalue["time"])) $lastvalue["time"] = null;
+                
+                if (!is_numeric($lastvalue["value"])) $lastvalue["value"] = null;
+                if (is_nan($lastvalue["value"])) $lastvalue["value"] = null;
+            
             } else {
                 // if it does not, load it in to redis from the actual feed data because we have no updated data from sql feeds table with redis enabled.
                 $lastvalue = $this->EngineClass($engine)->lastvalue($id);
